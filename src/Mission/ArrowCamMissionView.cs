@@ -1,9 +1,11 @@
-﻿using TaleWorlds.Core;
+﻿using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.MountAndBlade.View.Missions;
+using TaleWorlds.MountAndBlade.View;
+using TaleWorlds.MountAndBlade.View.MissionViews;
 
 namespace ArrowCam
 {
@@ -20,8 +22,6 @@ namespace ArrowCam
         private float _watchArrowTimeout = .4f;
         private float _upModifier = .5f;
 
-        private float _initialSlowMotionFactor = 0.0f;
-        private bool _initialSlowMotionMode = false;
         private bool _slowMotionActive = false;
 
         public override void OnCreated()
@@ -34,6 +34,10 @@ namespace ArrowCam
             base.OnMissionScreenTick(dt);
             if (Input.IsKeyDown(InputKey.MiddleMouseButton))
             {
+                foreach (SiegeWeapon sw in Mission.Current.ActiveMissionObjects.FindAllWithType<SiegeWeapon>())
+                    if (sw.PilotAgent == Agent.Main && sw is Ballista)
+                        return;
+
                 // Retrieve missile
                 if (_lastMissileIndex == -1)
                 {
@@ -57,17 +61,17 @@ namespace ArrowCam
             // Check if it needs to be deleted
             if (_cameraCreated)
             {
-                if( !Input.IsKeyDown(InputKey.MiddleMouseButton) 
+                if (!Input.IsKeyDown(InputKey.MiddleMouseButton)
                     || _missile == null
                     || _arrowControlMissionLogic.TrackedMissileCollided)
                 {
                     // Slow motion
                     if (_arrowControlMissionLogic.CollidedWithPerson && !_slowMotionActive)
                     {
-                        _initialSlowMotionMode = base.Mission.Scene.SlowMotionMode;
-                        _initialSlowMotionFactor = base.Mission.Scene.SlowMotionFactor;
-                        base.Mission.Scene.SlowMotionMode = true;
-                        base.Mission.Scene.SlowMotionFactor = 0.33f;
+                        if (Mission.Current.GetRequestedTimeSpeed(1, out float _))
+                            Mission.Current.RemoveTimeSpeedRequest(1);
+                        Mission.Current.AddTimeSpeedRequest(new Mission.TimeSpeedRequest(.3f, 1));
+                        
                         _slowMotionActive = true;
                         _watchArrowTimeout *= 3.5f;
                     }
@@ -75,10 +79,13 @@ namespace ArrowCam
                     if (_watchArrowTimePassed > _watchArrowTimeout)
                     {
                         RemoveCamera();
+                        
                         if (_slowMotionActive)
                         {
-                            base.Mission.Scene.SlowMotionMode = _initialSlowMotionMode;
-                            base.Mission.Scene.SlowMotionFactor = _initialSlowMotionFactor;
+                            if (Mission.Current.GetRequestedTimeSpeed(1, out float _))
+                                Mission.Current.RemoveTimeSpeedRequest(1);
+                            Mission.Current.AddTimeSpeedRequest(new Mission.TimeSpeedRequest(1, 1));
+
                             _slowMotionActive = false;
                         }
                         _watchArrowTimeout = _watchArrowTimeoutDefault;
@@ -91,7 +98,7 @@ namespace ArrowCam
         public override void OnMissionScreenInitialize()
         {
             base.OnMissionScreenInitialize();
-            _arrowControlMissionLogic = Mission.GetMissionBehaviour<ArrowCamMissionLogic>();
+            _arrowControlMissionLogic = Mission.GetMissionBehavior<ArrowCamMissionLogic>();
         }
 
         private void CreateCamera()
@@ -101,7 +108,7 @@ namespace ArrowCam
 
             _camera = Camera.CreateCamera();
             Camera combatCamera = base.MissionScreen.CombatCamera;
-            if(combatCamera != null)
+            if (combatCamera != null)
             {
                 _camera.FillParametersFrom(combatCamera);
             }
@@ -109,6 +116,7 @@ namespace ArrowCam
             _cameraCreated = true;
         }
 
+        private Camera lastCamera { get; set; }
         private void UpdateCamera()
         {
             _camera.Position = _missile.GetPosition() - (_missile.GetVelocity().NormalizedCopy() * 2) + (Vec3.Up * _upModifier);
@@ -130,6 +138,4 @@ namespace ArrowCam
             _cameraCreated = false;
         }
     }
-
-
 }

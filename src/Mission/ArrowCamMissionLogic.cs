@@ -16,7 +16,8 @@ namespace ArrowCam
         private bool _trackedMissileCollided = false;
         private bool _collidedWithPerson = false;
 
-        public bool TrackedMissileCollided{
+        public bool TrackedMissileCollided
+        {
             get => _trackedMissileCollided;
         }
 
@@ -74,10 +75,10 @@ namespace ArrowCam
         }
 
         public override InquiryData OnEndMissionRequest(out bool canLeave)
-		{
-			canLeave = true;
-			return null;
-			
-		}
-	}
+        {
+            canLeave = true;
+            return null;
+
+        }
+    }
 }
