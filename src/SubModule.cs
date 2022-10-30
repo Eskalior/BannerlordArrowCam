@@ -9,6 +9,11 @@ namespace ArrowCam
 {
     internal class SubModule : MBSubModuleBase
     {
+        protected override void OnSubModuleLoad()
+        {
+            base.OnSubModuleLoad();
+            ArrowCamConfig.Initialize();
+        }
         public override void OnMissionBehaviorInitialize(Mission mission)
         {
             mission.AddMissionBehavior(new ArrowCamMissionLogic());

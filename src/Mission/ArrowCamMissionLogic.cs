@@ -26,19 +26,36 @@ namespace ArrowCam
             get => _collidedWithPerson;
         }
 
+        /// <summary>
+        ///     Adds custom behavior to the moment when a missile collides with something.
+        /// </summary>
+        /// <param name="collisionReaction">We just forward this.</param>
+        /// <param name="attackerAgent">The person that shot the missile.</param>
+        /// <param name="attachedAgent">The person that got shot.</param>
+        /// <param name="attachedBoneIndex">We just forward this, probably a way to add special behavior for headshots.</param>
         public override void OnMissileCollisionReaction(Mission.MissileCollisionReaction collisionReaction, Agent attackerAgent, Agent attachedAgent, sbyte attachedBoneIndex)
         {
+            // We only care about missiles shot by the player
             if (attackerAgent == base.Mission.MainAgent)
             {
                 _trackedMissileCollided = true;
+
+                // Make sure a person was hit
                 if (attachedAgent != null)
                     _collidedWithPerson = true;
             }
+            // Call the base behavior
             base.OnMissileCollisionReaction(collisionReaction, attackerAgent, attachedAgent, attachedBoneIndex);
         }
 
+        /// <summary>
+        ///     Returns the last missile shot by the player.
+        /// </summary>
+        /// <returns>The missile object.</returns>
         public Mission.Missile GetLatestMissile()
         {
+            // If the missile we track already collided we skip this
+            // This prevents looking at an old missile
             if (_trackedMissileCollided)
                 return null;
 
@@ -53,8 +70,14 @@ namespace ArrowCam
             return foundMissile;
         }
 
+        /// <summary>
+        ///     Return a missile fired by the player by index.
+        /// </summary>
+        /// <param name="index">Index of the missile.</param>
+        /// <returns>The missile object.</returns>
         public Mission.Missile GetMissileByIndex(int index)
         {
+            // We skip if it already collided
             if (_trackedMissileCollided)
                 return null;
 
@@ -68,17 +91,24 @@ namespace ArrowCam
             return null;
         }
 
+        /// <summary>
+        ///     Resets the currently tracked missile such that another can be tracked.
+        /// </summary>
         public void ResetTrackingMissile()
         {
             _trackedMissileCollided = false;
             _collidedWithPerson = false;
         }
 
+        /// <summary>
+        ///     The game asks us if it can end the mission here. We won't block that.
+        /// </summary>
+        /// <param name="canLeave">Whether or not we allow the game to end the mission.</param>
+        /// <returns>null</returns>
         public override InquiryData OnEndMissionRequest(out bool canLeave)
         {
             canLeave = true;
             return null;
-
         }
     }
 }
