@@ -42,7 +42,7 @@ namespace ArrowCam
             if (Input.IsKeyDown(InputKey.MiddleMouseButton))
             {
                 // Currently disable ballistas
-                foreach (SiegeWeapon sw in Mission.Current.ActiveMissionObjects.FindAllWithType<SiegeWeapon>())
+                foreach (SiegeWeapon sw in Mission.ActiveMissionObjects.FindAllWithType<SiegeWeapon>())
                     if (sw.PilotAgent == Agent.Main && sw is Ballista)
                         return;
 
